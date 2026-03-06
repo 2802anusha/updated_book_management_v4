@@ -1,99 +1,197 @@
-# Flask Book Management – PostgreSQL Setup
+# Flask + PostgreSQL Book Management Setup
 
-This project uses **Flask + PostgreSQL** for a simple book management system.
+This guide explains how to install PostgreSQL, create the database and
+table, and configure it for a Flask CRUD application.
 
-This README explains:
-- How to set up PostgreSQL locally (default & recommended)
-- When and why `pg_hba.conf` changes are needed
-- Database and user creation steps
+It works for **local development** and also includes **optional notes
+for remote PostgreSQL setups**.
 
-## 1️⃣ Install PostgreSQL
+------------------------------------------------------------------------
 
+# 1. Install PostgreSQL
+
+``` bash
 sudo apt update
-
 sudo apt install postgresql postgresql-contrib
+```
 
-#  2️⃣ Switch to PostgreSQL Admin User
+------------------------------------------------------------------------
 
+# 2. Switch to the PostgreSQL System User
+
+``` bash
 sudo -i -u postgres
+```
+
+**Explanation:**\
+This command switches from your Linux user to the **postgres Linux
+user** which administers PostgreSQL.
+
+------------------------------------------------------------------------
+
+# 3. Open PostgreSQL CLI
+
+``` bash
 psql
+```
 
-postgres is the default PostgreSQL superuser
-This uses peer authentication (Linux user → PostgreSQL user)
+**Explanation:**\
+This starts the **PostgreSQL interactive terminal** where you can run
+SQL commands.
 
-# 3️⃣ Set Password for PostgreSQL Superuser
+------------------------------------------------------------------------
 
-ALTER USER postgres WITH PASSWORD 'yourpassword';   -- Sets password for postgres user
+# 4. Set Password for PostgreSQL Superuser
 
-This password is required for:
-Flask apps
-psycopg2
-TCP/IP connections
+``` sql
+ALTER USER postgres WITH PASSWORD 'yourpassword';
+```
 
-# 4️⃣ Create Application Database User (Recommended)
+**Explanation:**\
+Sets a password for the **postgres database role**, which allows
+applications like Flask to authenticate using a password.
 
-CREATE ROLE book_user LOGIN PASSWORD 'bookpassword';   -- Creates a dedicated DB user
+------------------------------------------------------------------------
 
-⚠️ Avoid using postgres user in applications.
+# 5. Create Application Database
 
-# 5️⃣ Create Database
-CREATE DATABASE book_db OWNER book_user; -- Creates database owned by app user
+``` sql
+CREATE DATABASE demo_flask;
+```
 
-# 6️⃣ Connect to the Database
-\c book_db; -- Switches connection to book_db
+**Explanation:**\
+Creates a new database that will store the tables used by the Flask
+application.
 
-# 7️⃣ Create Book Table
+------------------------------------------------------------------------
 
+# 6. Connect to the Database
+
+``` sql
+\c demo_flask
+```
+
+**Explanation:**\
+Switches the current session to the **demo_flask database** so tables
+can be created inside it.
+
+------------------------------------------------------------------------
+
+# 7. Create Book Table
+
+``` sql
 CREATE TABLE book (
-
-    id SERIAL PRIMARY KEY, 
-    publisher VARCHAR(255) NOT NULL,       
-    name VARCHAR(255) NOT NULL,            
-    date DATE NOT NULL,                    
-    cost DECIMAL(10, 2) NOT NULL           
+    id SERIAL PRIMARY KEY,         -- Auto-incrementing unique ID for each book
+    publisher VARCHAR(255) NOT NULL, -- Name of the publisher
+    name VARCHAR(255) NOT NULL,      -- Book title
+    date DATE NOT NULL,              -- Publication date
+    cost DECIMAL(10,2) NOT NULL      -- Book price
 );
+```
 
-# 8️⃣ Default pg_hba.conf (NO CHANGES REQUIRED for Local Setup)
+**Explanation:**\
+Creates the main table used by the CRUD API.
 
-By default, PostgreSQL allows:
+------------------------------------------------------------------------
 
-Linux user login via peer
-Local TCP connections via password (SCRAM)
+# 8. Flask Database Configuration
 
-Default configuration works for:
+Example Flask configuration:
 
-Flask running on the same machine
-psycopg2
-Local Docker containers
-
-✅ No changes required for local development
-
-# 9️⃣ Flask Database Configuration (Local)
+``` python
 db_config = {
-
     "host": "localhost",
-    "user": "book_user",
-    "password": "bookpassword",
-    "dbname": "book_db"
- }
+    "user": "postgres",
+    "password": "yourpassword",
+    "dbname": "demo_flask"
+}
+```
 
-🔐 pg_hba.conf Changes (ONLY for Remote PostgreSQL)
+This configuration works with the **default PostgreSQL authentication
+setup**.
 
-⚠️ Required ONLY if PostgreSQL is on a different machine
+------------------------------------------------------------------------
 
-Examples:
+# 9. pg_hba.conf (Only Required for Remote Database Access)
 
-Cloud PostgreSQL
-Separate VM
-Kubernetes
-Remote server
+For **local development**, the default configuration usually works.
 
-Example change (remote access):
-host    book_db     book_user     0.0.0.0/0     scram-sha-256
+Default file location:
 
+    /etc/postgresql/16/main/pg_hba.conf
 
-# After editing:
+Default important entries:
 
-sudo systemctl reload postgresql
+    local   all             postgres                                peer
+    local   all             all                                     peer
+    host    all             all             127.0.0.1/32            scram-sha-256
+    host    all             all             ::1/128                 scram-sha-256
 
-❗ Do NOT open 0.0.0.0/0 in production without firewall rules
+Explanation:
+
+  Type            Meaning
+  --------------- ---------------------------------------
+  peer            Linux user must match PostgreSQL role
+  scram-sha-256   Password based authentication
+
+------------------------------------------------------------------------
+
+# 10. Remote PostgreSQL Setup (Optional)
+
+If your Flask app connects from **another machine**, add this to
+`pg_hba.conf`:
+
+    host    all     all     0.0.0.0/0     scram-sha-256
+
+Then restart PostgreSQL:
+
+``` bash
+sudo systemctl restart postgresql
+```
+
+Also update `postgresql.conf`:
+
+    listen_addresses = '*'
+
+⚠️ Only do this if you **need remote access**.
+
+------------------------------------------------------------------------
+
+# 11. Test Connection
+
+``` bash
+psql -U postgres -d demo_flask -h localhost
+```
+
+If it connects successfully, your setup is correct.
+
+------------------------------------------------------------------------
+
+# 12. Run Flask Application
+
+``` bash
+cd Server
+source venv/bin/activate
+python3 app.py
+```
+
+API will start at:
+
+    http://localhost:5000
+
+------------------------------------------------------------------------
+
+# Summary
+
+This setup provides:
+
+-   PostgreSQL installation
+-   Database creation
+-   Table creation
+-   Flask connection configuration
+-   Optional remote database configuration
+
+Works for both:
+
+✔ Local development\
+✔ Remote database deployments
