@@ -2,8 +2,9 @@ import { test, expect } from './test-setup';
 
 test.describe('Update Book Page', () => {
   test('should navigate to update page with pre-filled data', async ({ page }) => {
+    const base = process.env.PLAYWRIGHT_BASE_URL || `http://localhost:${process.env.PLAYWRIGHT_PORT || 5176}`;
     // First go to books page
-    await page.goto('http://localhost:5173/');
+    await page.goto(`${base}/`);
     await page.waitForTimeout(2000);
     
     // Check if books exist and click update on first one
@@ -23,7 +24,7 @@ test.describe('Update Book Page', () => {
       await updateButtons.first().click();
       
       // Should navigate to update page
-      await expect(page).toHaveURL('http://localhost:5173/update');
+      await expect(page).toHaveURL(`${base}/update`);
       
       // Check if form is pre-filled with book data
       await expect(page.locator('h2:has-text("Update Book")')).toBeVisible();
@@ -43,14 +44,15 @@ test.describe('Update Book Page', () => {
   });
 
   test('should update book data successfully', async ({ page }) => {
-    // Navigate via books list to ensure we have a book to update
-    await page.goto('http://localhost:5173/');
+  const base = process.env.PLAYWRIGHT_BASE_URL || `http://localhost:${process.env.PLAYWRIGHT_PORT || 5176}`;
+  // Navigate via books list to ensure we have a book to update
+  await page.goto(`${base}/`);
     await page.waitForTimeout(2000);
     
     const updateButtons = page.locator('button.btn-primary');
     if (await updateButtons.first().isVisible()) {
       await updateButtons.first().click();
-      await page.waitForURL('http://localhost:5173/update');
+      await page.waitForURL(`${base}/update`);
       
       // Modify the book data
       const updatedData = {
@@ -73,7 +75,7 @@ test.describe('Update Book Page', () => {
       await page.click('button[type="submit"]');
       
       // Should redirect to books list
-      await expect(page).toHaveURL('http://localhost:5173/');
+      await expect(page).toHaveURL(`${base}/`);
       
       // Verify the update (you might check if the data changed in the list)
       await page.waitForTimeout(1000);
@@ -81,8 +83,9 @@ test.describe('Update Book Page', () => {
   });
 
   test('should display update form correctly', async ({ page }) => {
-    // Try direct navigation (might not work without book data)
-    await page.goto('http://localhost:5173/update');
+  const base = process.env.PLAYWRIGHT_BASE_URL || `http://localhost:${process.env.PLAYWRIGHT_PORT || 5176}`;
+  // Try direct navigation (might not work without book data)
+  await page.goto(`${base}/update`);
     
     // Either we see the form or we're redirected
     const updateForm = page.locator('h2:has-text("Update Book")');

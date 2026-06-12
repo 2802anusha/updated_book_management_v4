@@ -1,5 +1,9 @@
 import { defineConfig, devices } from '@playwright/test';
 
+// Allow overriding the dev server port/url via env vars when running tests.
+const port = process.env.PLAYWRIGHT_PORT || process.env.PORT || 5176;
+const base = process.env.PLAYWRIGHT_BASE_URL || `http://localhost:${port}`;
+
 export default defineConfig({
   testDir: './tests',
   fullyParallel: true,
@@ -7,10 +11,13 @@ export default defineConfig({
   retries: process.env.CI ? 2 : 0,
   workers: process.env.CI ? 1 : undefined,
   reporter: 'html',
-  timeout: 60000, // Global test timeout
-  
+  timeout: 60000,
+
+  globalSetup: './global-setup.js',
+
   use: {
-    baseURL: 'http://localhost:5173/',
+    baseURL: base,
+    storageState: 'auth-state.json',  // reuse login for every test
     trace: 'on-first-retry',
     screenshot: 'only-on-failure',
     video: 'retain-on-failure',
@@ -25,12 +32,13 @@ export default defineConfig({
     },
   ],
 
-  // Web server configuration
   webServer: {
-    command: 'npm run dev',
-    url: 'http://localhost:5173/',
-    reuseExistingServer: !process.env.CI,
-    timeout: 180000, // Increase to 3 minutes
+    // Start vite on the requested port so Playwright can manage lifecycle,
+    // but reuse existing server if already running.
+    command: `npm run dev -- --port ${port}`,
+    url: base,
+    reuseExistingServer: true,
+    timeout: 180000,
     stdout: 'pipe',
     stderr: 'pipe',
   },

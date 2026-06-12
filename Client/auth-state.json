@@ -1,0 +1,18 @@
+{
+  "cookies": [],
+  "origins": [
+    {
+      "origin": "http://localhost:5176",
+      "localStorage": [
+        {
+          "name": "test_books",
+          "value": "[{\"id\":\"seed-1\",\"publisher\":\"SeedPub\",\"name\":\"Seed Book\",\"date\":\"2025-01-01\",\"cost\":10}]"
+        },
+        {
+          "name": "access_token",
+          "value": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJmcmVzaCI6ZmFsc2UsImlhdCI6MTc4MTI1NjY0MywianRpIjoiOWI0OWI1MzYtY2RiNi00MTMyLThkYzUtNGRjYmY2NTc5MzI3IiwidHlwZSI6ImFjY2VzcyIsInN1YiI6IjEiLCJuYmYiOjE3ODEyNTY2NDMsImNzcmYiOiI5ZTcxZTdhNi00ZjZmLTQ3YjMtYmQ1Yi05MWI5NjQ0OWQ4MWQiLCJleHAiOjE3ODEyNTc1NDN9.YklYIrsUbGiyipJTqfMqjVLu4iHIilzVGRplhAu-B60"
+        }
+      ]
+    }
+  ]
+}
