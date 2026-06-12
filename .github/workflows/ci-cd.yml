@@ -43,7 +43,6 @@ jobs:
           db_path = os.getenv('BOOKS_DB_PATH', 'data/books.db')
           os.makedirs(os.path.dirname(db_path), exist_ok=True)
           conn = sqlite3.connect(db_path)
-          # Create tables based on your schema (adjust if different)
           conn.execute('''
             CREATE TABLE IF NOT EXISTS book (
               id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -84,7 +83,7 @@ jobs:
         env:
           BOOKS_DB_PATH: data/books.db
           JWT_SECRET_KEY: "test-secret-key-32-chars-long-for-ci"
-          MSSQL_SERVER: ""   # force SQLite
+          MSSQL_SERVER: ""
         run: python -m pytest tests/pytest -v --json-report --json-report-file=tests/pytest/pytest-report.json
 
       - uses: actions/upload-artifact@v4
@@ -142,7 +141,7 @@ jobs:
           conn = sqlite3.connect(db_path)
           conn.execute('CREATE TABLE IF NOT EXISTS book (id INTEGER PRIMARY KEY AUTOINCREMENT, publisher TEXT NOT NULL, name TEXT NOT NULL, date TEXT NOT NULL, cost REAL NOT NULL)')
           conn.execute('CREATE TABLE IF NOT EXISTS user (id INTEGER PRIMARY KEY AUTOINCREMENT, username TEXT UNIQUE NOT NULL, password TEXT NOT NULL)')
-          conn.execute('INSERT INTO book (publisher, name, date, cost) VALUES (?, ?, ?, ?)', ('CI Pub', 'CI Book', '2026-06-01', 99.99))
+          conn.execute('INSERT OR IGNORE INTO book (publisher, name, date, cost) VALUES (?, ?, ?, ?)', ('CI Pub', 'CI Book', '2026-06-01', 99.99))
           from werkzeug.security import generate_password_hash
           conn.execute('INSERT OR IGNORE INTO user (username, password) VALUES (?, ?)', ('testuser', generate_password_hash('Test@1234')))
           conn.commit()
@@ -172,7 +171,7 @@ jobs:
           cache: npm
           cache-dependency-path: Client/package-lock.json
 
-      - name: Serve frontend build
+      - name: Install frontend dependencies and serve build
         working-directory: Client
         run: |
           npm ci
@@ -181,6 +180,78 @@ jobs:
       - name: Wait for frontend
         run: |
           for i in {1..30}; do curl -fsS http://127.0.0.1:5173 && exit 0; sleep 2; done; exit 1
+
+      - name: Write correct global-setup.js (API login)
+        working-directory: Client
+        run: |
+          cat > global-setup.js << 'EOF'
+          import { chromium } from '@playwright/test';
+
+          async function globalSetup() {
+            const browser = await chromium.launch();
+            const page = await browser.newPage();
+
+            const backendUrl = 'http://localhost:5001';
+            try {
+              const health = await page.request.get(`${backendUrl}/health`);
+              if (!health.ok()) throw new Error(`Backend health check failed: ${health.status()}`);
+              console.log('✅ Backend is healthy');
+            } catch (err) {
+              console.error('❌ Backend not reachable:', err);
+              throw err;
+            }
+
+            const loginRes = await page.request.post(`${backendUrl}/login`, {
+              data: { username: 'testuser', password: 'Test@1234' }
+            });
+            if (!loginRes.ok()) {
+              throw new Error(`Login failed: ${loginRes.status()} ${await loginRes.text()}`);
+            }
+            const { access_token } = await loginRes.json();
+
+            await page.addInitScript((token) => {
+              window.localStorage.setItem('access_token', token);
+            }, access_token);
+
+            await page.context().storageState({ path: 'auth-state.json' });
+            await browser.close();
+            console.log('✅ Global setup complete – token saved');
+          }
+
+          export default globalSetup;
+          EOF
+
+      - name: Write correct playwright.config.js (no webServer)
+        working-directory: Client
+        run: |
+          cat > playwright.config.js << 'EOF'
+          import { defineConfig, devices } from '@playwright/test';
+
+          export default defineConfig({
+            testDir: './tests',
+            fullyParallel: true,
+            forbidOnly: !!process.env.CI,
+            retries: process.env.CI ? 2 : 0,
+            workers: process.env.CI ? 1 : undefined,
+            reporter: 'html',
+            timeout: 60000,
+            globalSetup: './global-setup.js',
+            use: {
+              baseURL: process.env.BASE_URL || 'http://localhost:5173',
+              trace: 'on-first-retry',
+              screenshot: 'only-on-failure',
+              video: 'retain-on-failure',
+              actionTimeout: 10000,
+              navigationTimeout: 30000,
+            },
+            projects: [
+              {
+                name: 'chromium',
+                use: { ...devices['Desktop Chrome'] },
+              },
+            ],
+          });
+          EOF
 
       - name: Install Playwright browsers
         working-directory: Client

@@ -4,35 +4,36 @@ async function globalSetup() {
   const browser = await chromium.launch();
   const page = await browser.newPage();
 
-  const port = process.env.PLAYWRIGHT_PORT || process.env.PORT || 5176;
-  const base = process.env.PLAYWRIGHT_BASE_URL || `http://localhost:${port}`;
+  // 1. Ensure backend is reachable (health check)
+  const backendUrl = 'http://localhost:5001';
+  try {
+    const health = await page.request.get(`${backendUrl}/health`);
+    if (!health.ok()) throw new Error(`Backend health check failed: ${health.status()}`);
+    console.log('✅ Backend is healthy');
+  } catch (err) {
+    console.error('❌ Backend not reachable:', err);
+    throw err;
+  }
 
-  await page.goto(`${base}/login`);
+  // 2. Login via API and store token directly
+  const loginRes = await page.request.post(`${backendUrl}/login`, {
+    data: { username: 'testuser', password: 'Test@1234' }
+  });
+  if (!loginRes.ok()) {
+    throw new Error(`Login failed: ${loginRes.status()} ${await loginRes.text()}`);
+  }
+  const { access_token } = await loginRes.json();
 
-  // Wait for the form to appear
-  await page.waitForSelector('form', { timeout: 10000 });
+  // 3. Save token to localStorage (so it's available for all tests)
+  await page.addInitScript((token) => {
+    window.localStorage.setItem('access_token', token);
+  }, access_token);
 
-  // Username is first input, password is second (type=password)
-  await page.locator('input.form-control').first().fill('testuser');
-  await page.locator('input[type="password"]').fill('Test@1234');
-
-  await page.locator('button[type="submit"]').click();
-
-  // Wait for redirect to home
-  await page.waitForURL(url => !url.toString().includes('/login'), { timeout: 10000 });
-
-  // Seed a test book list in localStorage so tests that run without a
-  // fully-seeded backend can still validate UI flows.
-  const seed = [{ id: 'seed-1', publisher: 'SeedPub', name: 'Seed Book', date: '2025-01-01', cost: 10.0 }];
-  await page.evaluate((books) => {
-    try { localStorage.setItem('test_books', JSON.stringify(books)); } catch (e) {}
-  }, seed);
-
-  // Save auth state (includes localStorage seeded above) so test contexts
-  // reuse both auth and the seeded books.
+  // 4. Save storage state for reuse
   await page.context().storageState({ path: 'auth-state.json' });
 
   await browser.close();
+  console.log('✅ Global setup complete – token saved');
 }
 
 export default globalSetup;
