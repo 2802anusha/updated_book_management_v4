@@ -705,7 +705,7 @@ npx playwright install
 npx playwright install --with-deps chromium     # install system dependencies too
 
 # Run all tests (headless)
-npx playwright test
+PLAYWRIGHT_BASE_URL=http://localhost:5173 npx playwright test
 
 # Run tests with 1 worker (sequential, good for debugging)
 npx playwright test --workers=1
