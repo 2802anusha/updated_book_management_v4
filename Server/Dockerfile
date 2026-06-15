@@ -48,7 +48,7 @@ COPY . .
 
 RUN mkdir -p /app/data
 
-ENV FLASK_APP=app.py
+ENV FLASK_APP=mssql_app.py
 ENV FLASK_ENV=production
 ENV PYTHONUNBUFFERED=1
 ENV MSSQL_SERVER=localhost
@@ -64,4 +64,4 @@ EXPOSE 5001
 HEALTHCHECK --interval=30s --timeout=10s --start-period=5s --retries=3 \
     CMD python -c "import urllib.request; urllib.request.urlopen('http://localhost:5001/health')" || exit 1
 
-CMD ["python", "app.py"]
+CMD ["python", "mssql_app.py"]

@@ -1,7 +1,4 @@
-version: '3.8'
-
 services:
-
   # ── Microsoft SQL Server ──────────────────────────────────────────────────
   mssql:
     image: mcr.microsoft.com/mssql/server:2019-latest
@@ -33,10 +30,10 @@ services:
     ports:
       - "5001:5001"
     environment:
-      FLASK_APP: app.py
+      FLASK_APP: mssql_app.py
       FLASK_ENV: production
       JWT_SECRET_KEY: "${JWT_SECRET_KEY:-your-secret-key-change-in-production}"
-      MSSQL_SERVER: "mssql-container,1433"
+      MSSQL_SERVER: "mssql,1433"
       MSSQL_DATABASE: "${MSSQL_DATABASE:-books_db}"
       MSSQL_USERNAME: "${MSSQL_USERNAME:-sa}"
       MSSQL_PASSWORD: "${MSSQL_PASSWORD:-YourStrong@Passw0rd}"
@@ -54,7 +51,7 @@ services:
       interval: 30s
       timeout: 10s
       retries: 3
-      start_period: 10s
+      start_period: 20s
 
   # ── React Frontend ────────────────────────────────────────────────────────
   frontend:
@@ -66,6 +63,7 @@ services:
       - "5173:5173"
     environment:
       NODE_ENV: production
+      VITE_API_URL: "http://localhost:5001"   # makes API URL configurable
     depends_on:
       backend:
         condition: service_healthy

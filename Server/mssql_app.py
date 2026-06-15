@@ -5,6 +5,7 @@ from flask_cors import CORS
 from datetime import datetime
 import pyodbc
 import os
+import time
 from werkzeug.security import generate_password_hash, check_password_hash
 from flask_jwt_extended import (
     JWTManager, create_access_token, jwt_required, get_jwt_identity
@@ -21,8 +22,9 @@ jwt = JWTManager(app)
 MSSQL_SERVER   = os.environ.get('MSSQL_SERVER', 'localhost')
 MSSQL_DATABASE = os.environ.get('MSSQL_DATABASE', 'books_db')
 MSSQL_USERNAME = os.environ.get('MSSQL_USERNAME', 'sa')
-MSSQL_PASSWORD = os.environ.get('MSSQL_PASSWORD', 'YourStrong@Pass123')
+MSSQL_PASSWORD = os.environ.get('MSSQL_PASSWORD', 'YourStrong@Passw0rd')
 MSSQL_DRIVER   = os.environ.get('MSSQL_DRIVER', 'ODBC Driver 17 for SQL Server')
+MSSQL_TRUST_CERT = os.environ.get('MSSQL_TRUST_CERT', 'yes')
 
 # For test environments, allow overriding the database name
 def get_db_name():
@@ -30,19 +32,53 @@ def get_db_name():
         return os.environ.get("MSSQL_TEST_DATABASE", "books_db_test")
     return MSSQL_DATABASE
 
-def get_connection_string():
+def get_connection_string(database=None):
     return (
         f"DRIVER={{{MSSQL_DRIVER}}};"
         f"SERVER={MSSQL_SERVER};"
-        f"DATABASE={get_db_name()};"
+        f"DATABASE={database or get_db_name()};"
         f"UID={MSSQL_USERNAME};"
         f"PWD={MSSQL_PASSWORD};"
-        "TrustServerCertificate=yes;"
+        f"TrustServerCertificate={MSSQL_TRUST_CERT};"
     )
 
-def get_db_connection():
-    connection = pyodbc.connect(get_connection_string())
+def get_db_connection(database=None, autocommit=False):
+    connection = pyodbc.connect(
+        get_connection_string(database),
+        autocommit=autocommit,
+        timeout=5,
+    )
     return connection
+
+def wait_for_sql_server(max_attempts=30, delay_seconds=2):
+    last_error = None
+    for attempt in range(1, max_attempts + 1):
+        try:
+            connection = get_db_connection(database='master')
+            connection.close()
+            return
+        except pyodbc.Error as error:
+            last_error = error
+            print(
+                f"Waiting for SQL Server ({attempt}/{max_attempts}): {error}",
+                flush=True,
+            )
+            time.sleep(delay_seconds)
+
+    raise RuntimeError("SQL Server did not become ready in time") from last_error
+
+def ensure_database():
+    db_name = get_db_name()
+    escaped_db_name = db_name.replace("]", "]]")
+    create_database_sql = f"CREATE DATABASE [{escaped_db_name}]".replace("'", "''")
+    connection = get_db_connection(database='master', autocommit=True)
+    cursor = connection.cursor()
+    cursor.execute(
+        f"IF DB_ID(?) IS NULL EXEC(N'{create_database_sql}')",
+        (db_name,),
+    )
+    cursor.close()
+    connection.close()
 
 def ensure_schema(connection):
     cursor = connection.cursor()
@@ -72,6 +108,8 @@ def ensure_schema(connection):
     cursor.close()
 
 def init_db():
+    wait_for_sql_server()
+    ensure_database()
     connection = get_db_connection()
     ensure_schema(connection)
     connection.close()
@@ -278,4 +316,4 @@ def method_not_allowed(error):
 
 if __name__ == '__main__':
     init_db()
-    app.run(debug=True, port=5001)
+    app.run(host='0.0.0.0', debug=os.environ.get('FLASK_DEBUG') == '1', port=5001)

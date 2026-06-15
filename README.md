@@ -29,43 +29,14 @@ Install these before you begin:
 
 ---
 
-## Quick start — step-by-step (Docker Compose — recommended)
+## Quick Start With Docker Compose
 
-Follow these commands in order after cloning the repository. These are copy-paste ready.
+After cloning the repository, start the full app with one command:
 
 ```bash
-# 1) Clone the repo and enter the project folder
 git clone https://github.com/<your-username>/<your-repo>.git
-cd <your-repo>/v2_book_management_system_flask_app
-
-# 2) Start only the SQL Server service first
-docker compose up -d mssql
-
-# 3) Wait until SQL Server accepts connections (copy-paste ready)
-echo "Waiting for SQL Server to be ready..."
-until docker run --rm --network container:mssql-container mcr.microsoft.com/mssql-tools /opt/mssql-tools/bin/sqlcmd -S localhost -U sa -P 'YourStrong@Passw0rd' -Q "SELECT 1" >/dev/null 2>&1; do
-  sleep 2
-  echo -n '.'
-done
-echo "\nSQL Server is ready."
-
-# 4) Confirm whether 'books_db' exists
-docker run --rm --network container:mssql-container mcr.microsoft.com/mssql-tools /opt/mssql-tools/bin/sqlcmd \
-  -S localhost -U sa -P 'YourStrong@Passw0rd' -Q "SELECT name FROM sys.databases"
-
-# 5) Create 'books_db' if it does not exist (idempotent)
-docker run --rm --network container:mssql-container mcr.microsoft.com/mssql-tools /opt/mssql-tools/bin/sqlcmd \
-  -S localhost -U sa -P 'YourStrong@Passw0rd' -Q "IF DB_ID('books_db') IS NULL CREATE DATABASE books_db"
-
-# 6) Start backend and frontend now that DB exists
-docker compose up -d backend frontend
-
-# 7) Verify services
-docker compose ps
-docker compose logs -f mssql backend frontend
-
-# 8) Stop and remove containers
-docker compose down
+cd <your-repo>
+docker compose up --build
 ```
 
 Service URLs (after startup):
@@ -77,8 +48,9 @@ Service URLs (after startup):
 | SQL Server | localhost:1433 |
 
 Notes:
-- The backend calls `init_db()` on startup; tables are created automatically the first time.
-- If the compose healthcheck fails because `sqlcmd` is not present in the image, the compose file uses a TCP port check instead (this repo includes that change).
+- The backend runs `Server/mssql_app.py`.
+- SQL Server, the `books_db` database, and the required tables are created automatically.
+- The SQL Server healthcheck uses a TCP readiness check because the Microsoft SQL Server runtime image does not include `sqlcmd`.
 
 Other useful commands:
 
