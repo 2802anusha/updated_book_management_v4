@@ -29,15 +29,32 @@ Install these before you begin:
 
 ---
 
-## Quick start (Docker Compose — recommended)
+## Quick start — step-by-step (Docker Compose — recommended)
 
-This is the simplest way to run the full stack including SQL Server.
+Follow these commands in order after cloning the repository. These are copy-paste ready.
 
 ```bash
+# 1) Clone the repo and enter the project folder
 git clone https://github.com/<your-username>/<your-repo>.git
-cd <your-repo>
+cd <your-repo>/v2_book_management_system_flask_app
+
+# 2) Build and start all services (foreground)
 docker compose up --build
+
+# (Optional) Run detached
+docker compose up -d --build
+
+# 3) Verify services are running
+docker compose ps
+
+# 4) Inspect logs (streaming)
+docker compose logs -f mssql backend frontend
+
+# 5) Stop and remove containers
+docker compose down
 ```
+
+Service URLs (after startup):
 
 | Service | URL |
 |---|---|
@@ -45,7 +62,9 @@ docker compose up --build
 | Backend API | http://localhost:5001 |
 | SQL Server | localhost:1433 |
 
-The backend calls `init_db()` on startup — tables are created automatically the first time.
+Notes:
+- The backend calls `init_db()` on startup; tables are created automatically the first time.
+- If the compose healthcheck fails because `sqlcmd` is not present in the image, the compose file uses a TCP port check instead (this repo includes that change).
 
 Other useful commands:
 
