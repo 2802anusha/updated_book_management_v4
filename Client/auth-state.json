@@ -2,15 +2,11 @@
   "cookies": [],
   "origins": [
     {
-      "origin": "http://localhost:5176",
+      "origin": "http://localhost:5173",
       "localStorage": [
         {
-          "name": "test_books",
-          "value": "[{\"id\":\"seed-1\",\"publisher\":\"SeedPub\",\"name\":\"Seed Book\",\"date\":\"2025-01-01\",\"cost\":10}]"
-        },
-        {
           "name": "access_token",
-          "value": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJmcmVzaCI6ZmFsc2UsImlhdCI6MTc4MTI1NjY0MywianRpIjoiOWI0OWI1MzYtY2RiNi00MTMyLThkYzUtNGRjYmY2NTc5MzI3IiwidHlwZSI6ImFjY2VzcyIsInN1YiI6IjEiLCJuYmYiOjE3ODEyNTY2NDMsImNzcmYiOiI5ZTcxZTdhNi00ZjZmLTQ3YjMtYmQ1Yi05MWI5NjQ0OWQ4MWQiLCJleHAiOjE3ODEyNTc1NDN9.YklYIrsUbGiyipJTqfMqjVLu4iHIilzVGRplhAu-B60"
+          "value": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJmcmVzaCI6ZmFsc2UsImlhdCI6MTc4MTUwMzczNiwianRpIjoiZTRjYjdhNGYtNzg5OS00MTljLTg3ODUtNGNjYThkZGE2MmYzIiwidHlwZSI6ImFjY2VzcyIsInN1YiI6IjEiLCJuYmYiOjE3ODE1MDM3MzYsImNzcmYiOiIyYmY5MmRiZC0wM2JjLTQzZDEtOWQxNS02NzY0ZTk3YTc3NDAiLCJleHAiOjE3ODE1MDQ2MzZ9.TmqyAoAR8_t639_9U7n0MGj6721S80evmnE27_Dt0as"
         }
       ]
     }
