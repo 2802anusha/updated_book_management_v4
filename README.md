@@ -38,19 +38,33 @@ Follow these commands in order after cloning the repository. These are copy-past
 git clone https://github.com/<your-username>/<your-repo>.git
 cd <your-repo>/v2_book_management_system_flask_app
 
-# 2) Build and start all services (foreground)
-docker compose up --build
+# 2) Start only the SQL Server service first
+docker compose up -d mssql
 
-# (Optional) Run detached
-docker compose up -d --build
+# 3) Wait until SQL Server accepts connections (copy-paste ready)
+echo "Waiting for SQL Server to be ready..."
+until docker run --rm --network container:mssql-container mcr.microsoft.com/mssql-tools /opt/mssql-tools/bin/sqlcmd -S localhost -U sa -P 'YourStrong@Passw0rd' -Q "SELECT 1" >/dev/null 2>&1; do
+  sleep 2
+  echo -n '.'
+done
+echo "\nSQL Server is ready."
 
-# 3) Verify services are running
+# 4) Confirm whether 'books_db' exists
+docker run --rm --network container:mssql-container mcr.microsoft.com/mssql-tools /opt/mssql-tools/bin/sqlcmd \
+  -S localhost -U sa -P 'YourStrong@Passw0rd' -Q "SELECT name FROM sys.databases"
+
+# 5) Create 'books_db' if it does not exist (idempotent)
+docker run --rm --network container:mssql-container mcr.microsoft.com/mssql-tools /opt/mssql-tools/bin/sqlcmd \
+  -S localhost -U sa -P 'YourStrong@Passw0rd' -Q "IF DB_ID('books_db') IS NULL CREATE DATABASE books_db"
+
+# 6) Start backend and frontend now that DB exists
+docker compose up -d backend frontend
+
+# 7) Verify services
 docker compose ps
-
-# 4) Inspect logs (streaming)
 docker compose logs -f mssql backend frontend
 
-# 5) Stop and remove containers
+# 8) Stop and remove containers
 docker compose down
 ```
 
