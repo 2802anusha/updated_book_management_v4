@@ -18,10 +18,7 @@ services:
       - book-management-network
     restart: unless-stopped
     healthcheck:
-      test: >
-        /opt/mssql-tools/bin/sqlcmd
-        -S localhost -U sa -P "${MSSQL_PASSWORD:-YourStrong@Passw0rd}"
-        -Q "SELECT 1"
+      test: ["CMD-SHELL", "bash -c 'echo > /dev/tcp/127.0.0.1/1433'"]
       interval: 10s
       timeout: 5s
       retries: 10
