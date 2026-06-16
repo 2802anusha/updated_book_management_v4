@@ -18,7 +18,7 @@ env:
   MSSQL_DATABASE: books_db
   MSSQL_USERNAME: sa
   MSSQL_PASSWORD: "YourStrong@Passw0rd"
-  MSSQL_DRIVER: "ODBC Driver 17 for SQL Server"
+  MSSQL_DRIVER: "ODBC Driver 18 for SQL Server"
   MSSQL_TRUST_CERT: "yes"
   JWT_SECRET_KEY: "ci-test-secret-key-32-chars-long!"
 
@@ -58,7 +58,7 @@ jobs:
           cache-dependency-path: Server/requirements.txt
 
       # ── Install ODBC Driver 17 ───────────────────────────────────────
-      - name: Install Microsoft ODBC Driver 17 for SQL Server
+      - name: Install Microsoft ODBC Driver 18 for SQL Server
         run: |
           curl -fsSL https://packages.microsoft.com/keys/microsoft.asc -o /tmp/microsoft.asc
           sudo gpg --batch --yes --dearmor -o /usr/share/keyrings/microsoft-prod.gpg /tmp/microsoft.asc
@@ -84,7 +84,7 @@ jobs:
 
           # Connect to master to create the DB
           master_cs = (
-              f"DRIVER={{ODBC Driver 17 for SQL Server}};"
+              f"DRIVER={{ODBC Driver 18 for SQL Server}};"
               f"SERVER={server};DATABASE=master;UID=sa;PWD={password};"
               "TrustServerCertificate=yes;"
           )
@@ -109,7 +109,7 @@ jobs:
 
           # Connect to books_db and create tables
           db_cs = (
-              f"DRIVER={{ODBC Driver 17 for SQL Server}};"
+              f"DRIVER={{ODBC Driver 18 for SQL Server}};"
               f"SERVER={server};DATABASE=books_db;UID=sa;PWD={password};"
               "TrustServerCertificate=yes;"
           )
@@ -147,7 +147,7 @@ jobs:
           from werkzeug.security import generate_password_hash
 
           cs = (
-              f"DRIVER={{ODBC Driver 17 for SQL Server}};"
+              f"DRIVER={{ODBC Driver 18 for SQL Server}};"
               f"SERVER={os.environ['MSSQL_SERVER']};DATABASE=books_db;"
               f"UID=sa;PWD={os.environ['MSSQL_PASSWORD']};TrustServerCertificate=yes;"
           )
@@ -236,7 +236,7 @@ jobs:
           cache: pip
           cache-dependency-path: Server/requirements.txt
 
-      - name: Install Microsoft ODBC Driver 17 for SQL Server
+      - name: Install Microsoft ODBC Driver 18 for SQL Server
         run: |
           curl -fsSL https://packages.microsoft.com/keys/microsoft.asc -o /tmp/microsoft.asc
           sudo gpg --batch --yes --dearmor -o /usr/share/keyrings/microsoft-prod.gpg /tmp/microsoft.asc
@@ -264,7 +264,7 @@ jobs:
           password = os.environ['MSSQL_PASSWORD']
 
           master_cs = (
-              f"DRIVER={{ODBC Driver 17 for SQL Server}};"
+              f"DRIVER={{ODBC Driver 18 for SQL Server}};"
               f"SERVER={server};DATABASE=master;UID=sa;PWD={password};"
               "TrustServerCertificate=yes;"
           )
@@ -288,7 +288,7 @@ jobs:
           conn.close()
 
           db_cs = (
-              f"DRIVER={{ODBC Driver 17 for SQL Server}};"
+              f"DRIVER={{ODBC Driver 18 for SQL Server}};"
               f"SERVER={server};DATABASE=books_db;UID=sa;PWD={password};"
               "TrustServerCertificate=yes;"
           )

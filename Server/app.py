@@ -21,7 +21,7 @@ jwt = JWTManager(app)
 
 def get_connection_string():
     return (
-        f"DRIVER={{{os.environ.get('MSSQL_DRIVER', 'ODBC Driver 17 for SQL Server')}}};"
+        f"DRIVER={{{os.environ.get('MSSQL_DRIVER', 'ODBC Driver 18 for SQL Server')}}};"
         f"SERVER={os.environ.get('MSSQL_SERVER', 'localhost')};"
         f"DATABASE={os.environ.get('MSSQL_DATABASE', 'books_db')};"
         f"UID={os.environ.get('MSSQL_USERNAME', 'sa')};"

@@ -23,7 +23,7 @@ MSSQL_SERVER   = os.environ.get('MSSQL_SERVER', 'localhost')
 MSSQL_DATABASE = os.environ.get('MSSQL_DATABASE', 'books_db')
 MSSQL_USERNAME = os.environ.get('MSSQL_USERNAME', 'sa')
 MSSQL_PASSWORD = os.environ.get('MSSQL_PASSWORD', 'YourStrong@Passw0rd')
-MSSQL_DRIVER   = os.environ.get('MSSQL_DRIVER', 'ODBC Driver 17 for SQL Server')
+MSSQL_DRIVER   = os.environ.get('MSSQL_DRIVER', 'ODBC Driver 18 for SQL Server')
 MSSQL_TRUST_CERT = os.environ.get('MSSQL_TRUST_CERT', 'yes')
 
 # For test environments, allow overriding the database name
